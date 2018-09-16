@@ -1,12 +1,22 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './App';
+import { BrowserRouter, Switch, Route } from 'react-router-dom'
+import { messaging } from './component/firebase';
+
 import './index.css';
 
-import { messaging } from './firebase';
+import Main from './component/main';
+import SignUp from './component/signup';
+import SignIn from './component/signin';
 
 ReactDOM.render(
-  <App />,
+  <BrowserRouter>
+    <Switch>
+      <Route path="/" exact={true} component={Main} />
+      <Route path="/signup" exact={true} component={SignUp} />
+      <Route path="/signin" exact={true} component={SignIn} />
+    </Switch>
+  </BrowserRouter>,
   document.getElementById('root')
 );
 
