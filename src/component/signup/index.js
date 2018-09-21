@@ -22,27 +22,23 @@ class SignUp extends Component {
     event.preventDefault();
     if (!event.target.checkValidity()) {
       this.setState({ displayErrors: true, errors: 'form is invalid!' });
-      console.log('form is invalid! so we do nothing');
       return;
     }
-    this.setState({ displayErrors: false, errors: '', email: event.target.email.value, password: event.target.password.value });
-    console.log(this.state);
-    this.signIn();
+    this.setState({ displayErrors: false, errors: '', email: event.target.email.value, password: event.target.password.value }, function(){
+      this.signUp();
+    });
   }
 
-  // Auth Events
-  signIn() {
+  signUp() {
     var self = this;
     auth.createUserWithEmailAndPassword(this.state.email, this.state.password)
       .then((result) => {
-        console.log(result.email);
         this.props.history.push('/')
       }).catch(function (error) {
         // Handle Errors here.
         var errorCode = error.code;
         var errorMessage = error.message;
         self.setState({ errors: errorCode + ' -> ' + errorMessage, displayErrors: true })
-        console.log(errorCode, errorMessage);
       });
   }
 
