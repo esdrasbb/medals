@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { auth, database } from '../firebase';
 import { Link } from 'react-router-dom'
 
 import Header from '../header'
@@ -19,29 +18,13 @@ class Success extends Component {
         return (date + '-' + month + '-' + year);
     }
 
-    componentWillMount() {
-        var uid = auth.currentUser.uid;
-        let email = this.props.match.params.user;
-        let currentDate = this.showCurrentDate();
-        database.ref('Users/').child(uid).set({
-            email,
-            currentDate
-        }).catch((error) => {
-            //error callback
-            console.log('error ', error)
-        })
-        auth.signOut()
-            .then(() => {
-            });
-    }
-
     render() {
         return (
             <div>
                 <Header />
                 <div className="App">
                     <p className="App-intro">
-                        <code><b>Aluno: {this.props.match.params.user}</b></code>
+                        <code><b>Aluno: {this.props.location.state.userName}</b></code>
                     </p>
                     <p className="App-intro">
                         <code><b>Presença registrada com sucesso em: {this.showCurrentDate()}</b></code>

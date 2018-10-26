@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { auth } from '../firebase';
+import { database } from '../firebase';
 
 import Header from '../header'
 import './signup.css';
@@ -9,8 +9,9 @@ class SignUp extends Component {
     super(props);
 
     this.state = {
-      email: '',
-      password: '',
+      loaded: false,
+      students: [],
+      studentId: '',
       displayErrors: false,
       errors: ''
     }
@@ -18,49 +19,95 @@ class SignUp extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-  handleSubmit(event) {
-    event.preventDefault();
-    if (!event.target.checkValidity()) {
-      this.setState({ displayErrors: true, errors: 'form is invalid!' });
-      return;
-    }
-    this.setState({ displayErrors: false, errors: '', email: event.target.email.value, password: event.target.password.value }, function(){
-      this.signUp();
+  componentWillMount() {
+    let self = this;
+    database.ref('students/').on("value", function (snapshot) {
+      let students = []
+      if (snapshot.numChildren() > 0) {
+        students = new Map(Object.entries(snapshot.val()))
+      }
+      self.setState({ loaded: true, students: students });
+    }, function (errorObject) {
+      console.log("The read failed: " + errorObject.code);
     });
   }
 
-  signUp() {
-    var self = this;
-    auth.createUserWithEmailAndPassword(this.state.email, this.state.password)
-      .then((result) => {
-        this.props.history.push('/')
-      }).catch(function (error) {
-        // Handle Errors here.
-        var errorCode = error.code;
-        var errorMessage = error.message;
-        self.setState({ errors: errorCode + ' -> ' + errorMessage, displayErrors: true })
-      });
+  handleSubmit(event) {
+    event.preventDefault();
+    if (!event.target.checkValidity()) {
+      this.setState({ displayErrors: true, errors: 'Você não selecionou seu nome!' });
+      return;
+    }
+    this.setState({ displayErrors: false, errors: '', studentId: event.target.student.value }, function () {
+      this.save();
+    });
+  }
+
+  showCurrentDate() {
+    var date = new Date().getDate();
+    var month = new Date().getMonth() + 1;
+    var year = new Date().getFullYear();
+
+    return (date + '-' + month + '-' + year);
+  }
+
+  save() {
+    const students = this.state.students;
+    const studentId = this.state.studentId;
+    const studentName = students.get(studentId);
+    let currentDate = this.showCurrentDate();
+    database.ref('classes/').child(studentId).set({
+      currentDate
+    }).then((result) => {
+      this.props.history.push({
+        pathname: "/success/" + studentId,
+        state: { userName: studentName }
+      })
+    }).catch((error) => {
+      console.log('error ', error)
+    })
+  }
+
+  handleStudents() {
+    const students = this.state.students;
+    let radios = [];
+    students.forEach((value, key) => {
+      radios.push(
+        <div key={key}>
+          <input
+            type="radio"
+            name="student"
+            data-id={key}
+            id={key}
+            value={key}
+            required
+          />
+          <label htmlFor={key}>{value}</label>
+        </div>
+      )
+    });
+    return radios;
   }
 
   render() {
-    const { displayErrors } = this.state;
+    const { displayErrors, loaded } = this.state;
+    if (!loaded) {
+      return (<div />)
+    }
+
     return (
       <div>
         <Header />
         <div className="App">
           <p className="App-intro">
-            <code><b>Informe um e-mail e senha para criar seu acesso:</b></code>
+            <code><b>Selecione seu nome e confirme a presença:</b></code>
           </p>
           <div className="AppBody">
             <form onSubmit={this.handleSubmit} noValidate className={displayErrors ? ['displayErrors App-form'] : 'App-form'}>
-              <label htmlFor="email">Email</label>
-              <input id="email" name="email" type="email" required />
-              <br />
-              <label htmlFor="password">Senha</label>
-              <input id="password" name="password" type="password" required />
+              {this.handleStudents()}
               <br />
               <br />
-              <input className="button" type="submit" value="Criar acesso" />
+              <input className="button" type="submit" value="Salvar" />
             </form>
           </div>
         </div>
